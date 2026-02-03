@@ -12,4 +12,3 @@ class Resume(models.Model):
 
     def __str__(self) -> str:
         return f"{self.candidate_name} <{self.email}>"
-

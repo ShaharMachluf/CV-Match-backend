@@ -1,15 +1,40 @@
-from django.http import JsonResponse, HttpRequest
-from django.views.decorators.http import require_GET
+from django.contrib.auth import get_user_model
+from rest_framework.decorators import api_view
+from rest_framework.request import Request
+from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
+
+from .serializers import UserSignUpSerializer
+
+User = get_user_model()
 
 
-@require_GET
-def health(request: HttpRequest) -> JsonResponse:  # noqa: ARG001
+@api_view(["GET"])
+def health(request: Request) -> Response:  # noqa: ARG001
     """Simple health-check endpoint."""
-    return JsonResponse({"status": "ok"})
+    return Response({"status": "ok"})
 
 
-@require_GET
-def version(request: HttpRequest) -> JsonResponse:  # noqa: ARG001
+@api_view(["GET"])
+def version(request: Request) -> Response:  # noqa: ARG001
     """Return a simple version payload for the backend."""
-    return JsonResponse({"name": "cv-match-backend", "version": "0.1.0"})
+    return Response({"name": "cv-match-backend", "version": "0.1.0"})
+
+
+@extend_schema(request=UserSignUpSerializer, responses=UserSignUpSerializer)
+@api_view(["POST"])
+def sign_up(request: Request) -> Response:
+    """Sign up a new user."""
+    serializer = UserSignUpSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    data = serializer.validated_data
+
+    user = User.objects.create_user(
+        username=data["email"],
+        email=data["email"],
+        password=data["password"],
+    )
+
+    return Response({"status": "ok", "user_id": user.id})
+
 
